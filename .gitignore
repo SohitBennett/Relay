@@ -1,0 +1,36 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# builds
+dist/
+.next/
+out/
+build/
+
+# env
+.env
+.env*.local
+
+# relay local data (paired-device certs live here — never commit)
+.relay/
+*.relay-store.json
+
+# logs
+*.log
+npm-debug.log*
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# local Claude Code settings (machine-specific)
+.claude/settings.local.json
+
+# misc
+*.tsbuildinfo
+next-env.d.ts

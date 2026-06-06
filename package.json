@@ -1,0 +1,23 @@
+{
+  "name": "relay",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Relay — a beautiful web remote for your Android TV, over your own WiFi.",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n bridge,web -c cyan,magenta \"npm run dev -w @relay/bridge\" \"npm run dev -w @relay/web\"",
+    "dev:bridge": "npm run dev -w @relay/bridge",
+    "dev:web": "npm run dev -w @relay/web",
+    "build": "npm run build -w @relay/shared && npm run build -w @relay/web && npm run build -w @relay/bridge",
+    "start": "node apps/bridge/dist/index.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
