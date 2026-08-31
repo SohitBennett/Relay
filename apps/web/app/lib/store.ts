@@ -9,6 +9,7 @@ import {
   type TvDevice,
   type TvState,
   type RemoteCommand,
+  type NamedKey,
 } from "@relay/shared";
 
 export type BridgeStatus = "idle" | "connecting" | "open" | "closed";
@@ -23,11 +24,22 @@ interface RelayState {
   scanning: boolean;
   error: string | null;
 
+  /** Latest value the TV reports for the focused text field (for prefilling). */
+  imeValue: string;
+  /** True once the TV has reported a focused text field — a positive "typing should land here" signal (only some TVs send this). */
+  fieldReady: boolean;
+  /** Whether the on-screen keyboard panel is open. */
+  keyboardOpen: boolean;
+
   connectBridge: () => void;
   discover: () => void;
   connectTv: (host: string, name?: string) => void;
   sendCode: (code: string) => void;
   command: (command: RemoteCommand) => void;
+  typeText: (text: string) => void;
+  pressNamed: (key: NamedKey) => void;
+  openKeyboard: () => void;
+  closeKeyboard: () => void;
   disconnectTv: () => void;
   forget: (host: string) => void;
   cancelPairing: () => void;
@@ -60,6 +72,9 @@ export const useRelay = create<RelayState>((set, get) => {
     pairingHost: null,
     scanning: false,
     error: null,
+    imeValue: "",
+    fieldReady: false,
+    keyboardOpen: false,
 
     connectBridge: () => {
       if (typeof window === "undefined") return;
@@ -107,10 +122,22 @@ export const useRelay = create<RelayState>((set, get) => {
               tvState: null,
               phase: "disconnected",
               pairingHost: null,
+              keyboardOpen: false,
+              imeValue: "",
+              fieldReady: false,
             });
             break;
           case "state":
             set({ tvState: msg.state });
+            break;
+          case "imeField":
+            // The TV focused a text field — surface its value, flag it as ready,
+            // and pop the keyboard so the user can type straight away.
+            set({
+              imeValue: msg.value,
+              fieldReady: msg.focused,
+              keyboardOpen: msg.focused ? true : get().keyboardOpen,
+            });
             break;
           case "phase":
             set({ phase: msg.phase });
@@ -147,6 +174,14 @@ export const useRelay = create<RelayState>((set, get) => {
     sendCode: (code) => send({ type: "sendCode", code }),
 
     command: (command) => send({ type: "command", command }),
+
+    // Set the focused field to exactly this value (bridge clears first).
+    typeText: (text) => send({ type: "text", text }),
+
+    pressNamed: (key) => send({ type: "namedKey", key }),
+
+    openKeyboard: () => set({ keyboardOpen: true }),
+    closeKeyboard: () => set({ keyboardOpen: false }),
 
     disconnectTv: () => send({ type: "disconnect" }),
 

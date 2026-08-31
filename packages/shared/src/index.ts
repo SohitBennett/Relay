@@ -32,6 +32,12 @@ export type RemoteCommand =
   | "MUTE"
   | "POWER";
 
+/**
+ * Named editing keys for text fields. Separate from {@link RemoteCommand}
+ * because they only make sense while a TV text field is focused.
+ */
+export type NamedKey = "ENTER" | "DEL" | "SEARCH";
+
 export const REMOTE_COMMANDS: readonly RemoteCommand[] = [
   "DPAD_UP",
   "DPAD_DOWN",
@@ -91,6 +97,14 @@ export type ClientMessage =
   | { type: "sendCode"; code: string }
   /** Press a remote button on the connected TV. */
   | { type: "command"; command: RemoteCommand }
+  /**
+   * Set the full contents of the currently-focused TV field via the IME
+   * channel (replaces the field value — supports any character, editing, and
+   * clearing by sending "").
+   */
+  | { type: "text"; text: string }
+  /** Press a named editing key (Enter / Backspace / Search) as a key event. */
+  | { type: "namedKey"; key: NamedKey }
   /** Drop the active TV connection. */
   | { type: "disconnect" }
   /** Forget a paired device (deletes its stored certificate). */
@@ -118,6 +132,8 @@ export type BridgeMessage =
   | { type: "connected"; host: string; device: TvDevice }
   | { type: "disconnected"; host?: string; reason?: string }
   | { type: "state"; state: TvState }
+  /** The TV reports a text field is focused; `value` is its current contents. */
+  | { type: "imeField"; focused: boolean; value: string }
   | { type: "phase"; phase: ConnectionPhase; host?: string }
   | { type: "error"; message: string; code?: string }
   | { type: "pong" };

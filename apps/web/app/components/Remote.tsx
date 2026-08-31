@@ -6,6 +6,7 @@ import { useRelay } from "../lib/store";
 import { StatusBar } from "./StatusBar";
 import { DPad } from "./DPad";
 import { Key } from "./Key";
+import { KeyboardPanel } from "./KeyboardPanel";
 import {
   BackIcon,
   HomeIcon,
@@ -13,6 +14,7 @@ import {
   VolumeUp,
   VolumeDown,
   VolumeMute,
+  KeyboardIcon,
 } from "./icons";
 
 const KEY_MAP: Record<string, RemoteCommand> = {
@@ -36,6 +38,9 @@ const KEY_MAP: Record<string, RemoteCommand> = {
 
 export function Remote() {
   const { bridgeStatus, phase, connectedDevice, command, disconnectTv } = useRelay();
+  const keyboardOpen = useRelay((s) => s.keyboardOpen);
+  const openKeyboard = useRelay((s) => s.openKeyboard);
+  const closeKeyboard = useRelay((s) => s.closeKeyboard);
   const [pressed, setPressed] = useState<RemoteCommand | null>(null);
   const clearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -51,6 +56,7 @@ export function Remote() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (keyboardOpen) return; // don't drive the D-pad while typing
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
       const cmd = KEY_MAP[e.key];
@@ -60,7 +66,7 @@ export function Remote() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [fire]);
+  }, [fire, keyboardOpen]);
 
   return (
     <div className="mx-auto flex w-full max-w-[24rem] flex-col gap-5">
@@ -72,18 +78,28 @@ export function Remote() {
       />
 
       <div className="slab flex flex-col items-center gap-7 px-6 py-8 sm:px-8">
-        {/* Power — top right */}
+        {/* Top row — keyboard + power */}
         <div className="flex w-full items-center justify-between">
           <span className="eyebrow">remote</span>
-          <Key
-            aria-label="Power"
-            variant="danger"
-            pressed={pressed === "POWER"}
-            onPress={() => fire("POWER")}
-            className="h-11 w-11"
-          >
-            <PowerIcon width={20} height={20} />
-          </Key>
+          <div className="flex items-center gap-3">
+            <Key
+              aria-label="Keyboard"
+              pressed={keyboardOpen}
+              onPress={() => (keyboardOpen ? closeKeyboard() : openKeyboard())}
+              className="h-11 w-11"
+            >
+              <KeyboardIcon width={20} height={20} />
+            </Key>
+            <Key
+              aria-label="Power"
+              variant="danger"
+              pressed={pressed === "POWER"}
+              onPress={() => fire("POWER")}
+              className="h-11 w-11"
+            >
+              <PowerIcon width={20} height={20} />
+            </Key>
+          </div>
         </div>
 
         {/* D-pad */}
@@ -141,6 +157,8 @@ export function Remote() {
           arrow keys · enter · backspace supported
         </p>
       </div>
+
+      <KeyboardPanel open={keyboardOpen} onClose={closeKeyboard} />
     </div>
   );
 }

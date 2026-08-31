@@ -116,6 +116,12 @@ export function startBridge(opts: BridgeOptions = {}): void {
       case "command":
         tv.command(msg.command);
         return;
+      case "text":
+        tv.typeText(msg.text);
+        return;
+      case "namedKey":
+        tv.pressNamed(msg.key);
+        return;
       case "disconnect":
         tv.disconnect("requested by user");
         return;
